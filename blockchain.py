@@ -4,7 +4,6 @@ import json
 import time
 import random
 
-
 def sha256(data: str) -> str:
     return hashlib.sha256(data.encode()).hexdigest()
 
@@ -31,7 +30,6 @@ class Block:
         self.transactions = transactions  # list[VoteTransaction]
         self.previous_hash = prev_hash
         self.validator = validator
-        # snapshot of contract state (who has voted) for auditability
         self.contract_snapshot = json.dumps(sorted(list(contract.voted)))
         self.hash = self.compute_hash()
 
@@ -50,10 +48,6 @@ class Blockchain:
         self.chain.append(Block(0, '0', [], 'genesis', self.contract))
 
     def select_validator(self) -> str:
-        """
-        PoS-style: select a validator from users aged >=18 who haven't voted yet.
-        Falls back to 'default_validator' if pool is empty.
-        """
         eligible = [
             uid for uid, age in self.contract.eligible_users.items()
             if age >= 18 and uid not in self.contract.voted
@@ -63,16 +57,10 @@ class Blockchain:
         return random.choice(eligible)
 
     def add_block(self, transactions):
-        """
-        Add a block of vote transactions after smart-contract validation.
-        Each tx must be valid; then we mark each voter as 'voted' and seal the block.
-        """
-        # Validate all transactions first
         for tx in transactions:
             if not self.contract.can_vote(tx.voter_hash, tx.delegate):
                 raise Exception("Vote invalid (underage, already voted, or bad delegate).")
 
-        # Apply state changes before sealing the block
         for tx in transactions:
             self.contract.mark_voted(tx.voter_hash)
 

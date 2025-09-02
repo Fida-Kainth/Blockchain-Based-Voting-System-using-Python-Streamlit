@@ -1,4 +1,3 @@
-# smart_contract.py
 class VotingSmartContract:
     def __init__(self, eligible_users):
         self.voted = set()
@@ -13,4 +12,3 @@ class VotingSmartContract:
 
     def mark_voted(self, user_id):
         self.voted.add(user_id)
-
